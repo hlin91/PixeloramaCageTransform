@@ -42,7 +42,7 @@ func set_image(img: Image) -> void:
 	image = img
 	_set_transform_preview(img)
 	init_size(img.get_width(), img.get_height())
-	transform_preview_sprite.position = Vector2(img.get_width() / 2, img.get_height() / 2)
+	transform_preview_sprite.position = Vector2(ceil(img.get_width() / 2), ceil(img.get_height() / 2))
 
 func _crop_transparent_borders(img: Image) -> Image:
 	var crop_rect := img.get_used_rect()

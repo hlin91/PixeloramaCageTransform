@@ -151,7 +151,7 @@ func _handle_input(event: InputEvent) -> void:
 		if mouse_event.button_index == BUTTON_LEFT and mouse_event.pressed:
 			var prev_handle = selected_handle
 			var prev_point = selected_point_index
-			selected_handle = find_selected_in_out_handle(mouse_pos, in_handle.texture.get_width() * zoom.x)
+			selected_handle = find_selected_in_out_handle(mouse_pos, in_handle.texture.get_width() * zoom.x * 1.5)
 			
 			if prev_handle != selected_handle:
 				in_handle.hide()
@@ -161,7 +161,7 @@ func _handle_input(event: InputEvent) -> void:
 				selected_handle.show()
 				dragging_handle = true
 			else:
-				selected_point_index = find_selected_point_index(mouse_pos, point_1.texture.get_width() * zoom.x)
+				selected_point_index = find_selected_point_index(mouse_pos, point_1.texture.get_width() * zoom.x * 1.5)
 				
 			if selected_point_index >= 0:
 				dragging_point = true

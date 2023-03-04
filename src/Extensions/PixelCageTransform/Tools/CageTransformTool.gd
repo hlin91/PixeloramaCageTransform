@@ -28,8 +28,29 @@ func _ready() -> void:
 			cage_transform.global_position = selection_node.original_big_bounding_rectangle.position
 			cage_transform.set_image(selection_node.original_preview_image)
 
+# Adapt the draw events from the BaseTool into the mouse events the CageTransform understands
+
 func draw_start(_draw_pos: Vector2) -> void:
-	pass
+	if !cage_transform:
+		return
+	var event := InputEventMouseButton.new()
+	event.button_index = BUTTON_LEFT
+	event.pressed = true
+	cage_transform._handle_input(event)
+
+func draw_move(_draw_pos: Vector2) -> void:
+	if !cage_transform:
+		return
+	var event := InputEventMouseMotion.new()
+	cage_transform._handle_input(event)
+
+func draw_end(_draw_pos: Vector2) -> void:
+	if !cage_transform:
+		return
+	var event := InputEventMouseButton.new()
+	event.button_index = BUTTON_LEFT
+	event.pressed = false
+	cage_transform._handle_input(event)
 
 func _input(event: InputEvent) -> void:
 	if cage_transform:
@@ -42,8 +63,6 @@ func _input(event: InputEvent) -> void:
 			selection_node.show()
 			cage_transform.queue_free()
 			cage_transform = null
-		else:
-			cage_transform._handle_input(event)
 
 func _process(_delta) -> void:
 	if selection_node:
