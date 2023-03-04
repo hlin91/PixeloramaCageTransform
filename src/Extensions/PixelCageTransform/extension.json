@@ -1,0 +1,11 @@
+{
+	"name": "PixelCageTransform",
+	"display_name": "PixelCageTransform",
+	"description": "A bezier curve cage transform tool for Pixelorama",
+	"author": "Harvey Lin",
+	"version": "0.1",
+	"license": "MIT",
+	"nodes": [
+		"PixelCageTransform.tscn"
+	]
+}

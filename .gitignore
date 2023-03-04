@@ -1,0 +1,11 @@
+*.zip
+*.pck
+*~
+\#*\#
+
+# Godot-specific ignores
+.import/
+
+# Mono-specific ignores
+.mono/
+data_*/
