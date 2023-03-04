@@ -67,6 +67,9 @@ func _input(event: InputEvent) -> void:
 func _process(_delta) -> void:
 	if selection_node:
 		selection_node.dragged_gizmo = null # Prevent the gizmos from being dragged while in this tool
+		# Prevent the gizmos from eating the draw input
+		for g in selection_node.gizmos:
+			g.rect.size = Vector2.ZERO
 
 func queue_free() -> void:
 	if selection_node:
