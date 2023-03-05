@@ -6,8 +6,8 @@ var cage_transform_tool_scene: PackedScene = preload("res://src/Extensions/Pixel
 func _enter_tree() -> void:
 	extensions_api = get_node("/root/ExtensionsApi")
 	if extensions_api:
-		extensions_api.add_tool("CageTransform", "CageTransform", "cage_transform", cage_transform_tool_scene)
+		extensions_api.tools.add_tool("CageTransform", "CageTransform", "cage_transform", cage_transform_tool_scene)
 
 func _exit_tree() -> void:
 	if extensions_api:
-		extensions_api.remove_tool("CageTransform")
+		extensions_api.tools.remove_tool("CageTransform")

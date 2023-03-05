@@ -15,10 +15,10 @@ func _enter_tree() -> void:
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	if extensions_api:
-		global = extensions_api.get_global()
+		global = extensions_api.general.get_global()
 		if !global.current_project.has_selection:
 			return
-		canvas = extensions_api.get_canvas()
+		canvas = extensions_api.general.get_canvas()
 		selection_node = canvas.selection
 		if selection_node:
 			selection_node.transform_content_start()

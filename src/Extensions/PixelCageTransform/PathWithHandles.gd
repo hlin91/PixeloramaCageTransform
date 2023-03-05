@@ -33,8 +33,8 @@ func _ready():
 	in_handle_line.hide()
 	out_handle_line.hide()
 	if extensions_api:
-		canvas = extensions_api.get_canvas()
-		global = extensions_api.get_global()
+		canvas = extensions_api.general.get_canvas()
+		global = extensions_api.general.get_global()
 
 func _process(_delta):
 	update_line_with_path()
