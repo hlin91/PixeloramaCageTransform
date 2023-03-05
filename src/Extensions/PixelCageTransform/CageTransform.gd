@@ -2,7 +2,6 @@ extends Node2D
 
 export var cage_height: float = 10.0
 export var cage_width: float = 10.0
-export var bake_interval: float = 5.0
 
 onready var top_edge: Node= $TopEdge
 onready var bottom_edge: Node = $BottomEdge
@@ -21,6 +20,30 @@ var right_cached_points: Array = []
 var bottom_cached_points: Array = []
 
 var transform_preview_cooldown: bool = false
+
+class ColorCel:
+	var top_left_pos: Vector2
+	var top_right_pos: Vector2
+	var bottom_left_pos: Vector2
+	var bottom_right_pos: Vector2
+	
+	var top_left_color: Color
+	var top_right_color: Color
+	var bottom_left_color: Color
+	var bottom_right_color: Color
+
+	# Check if a point is inside the quadrilateral. Since a quadrilateral is convex, we can count the intersections of a line from p
+	# to a point outside
+	func is_point_inside_cell(p: Vector2) -> bool:
+		var vertices = [top_left_pos, top_right_pos, bottom_right_pos, bottom_left_pos]
+		var crossing_count = 0
+
+		for i in range(vertices.size()):
+			var j = (i + 1) % vertices.size()
+			if (vertices[i].y > p.y) != (vertices[j].y > p.y) and (p.x < (vertices[j].x - vertices[i].x) * (p.y - vertices[i].y) / (vertices[j].y - vertices[i].y) + vertices[i].x):
+				crossing_count += 1
+
+		return crossing_count % 2 != 0
 
 func _ready():
 	connect_edge_signals(top_edge)
@@ -216,9 +239,100 @@ func _get_bounding_box_pixel_pos() -> Vector2:
 
 	return Vector2(min_x, min_y)
 
+# Get the list of color cells using the matrix of deformed pixel positions
+# The positions of the cell will be real pixel positions in the transform preview image
+func _get_color_cel_list() -> Array:
+	var transform_preview_size := transform_preview_sprite.texture.get_size()
+	var original_position := Vector2(
+		(transform_preview_size.x - image.get_width()) / 2,
+		(transform_preview_size.y - image.get_height()) / 2
+	)
+	
+	# Calculate the real pixel positions
+	var real_pixel_positions := []
+	for x in range(deformed_relative_pixel_positions.size()):
+		var l := []
+		for y in range(deformed_relative_pixel_positions[x].size()):
+			var pos = original_position + Vector2(x, y) + deformed_relative_pixel_positions[x][y]
+			l.push_back(pos)
+		real_pixel_positions.push_back(l)
+
+	# Construct the color cel matrix
+	var result := []
+	for x in range(real_pixel_positions.size() - 1):
+		var l := []
+		for y in range(real_pixel_positions[x].size() - 1):
+			var cel := ColorCel.new()
+			cel.top_left_pos = real_pixel_positions[x][y]
+			cel.top_right_pos = real_pixel_positions[x + 1][y]
+			cel.bottom_left_pos = real_pixel_positions[x][y + 1]
+			cel.bottom_right_pos = real_pixel_positions[x + 1][y + 1]
+			image.lock()
+			cel.top_left_color = image.get_pixel(x, y)
+			cel.top_right_color = image.get_pixel(x + 1, y)
+			cel.bottom_left_color = image.get_pixel(x, y + 1)
+			cel.bottom_right_color = image.get_pixel(x + 1, y + 1)
+			image.unlock()
+			l.push_back(cel)
+		result.push_back(l)
+	return result
+
+# Get the interpolated color at position pos using nearest_neighbor interpolation
+func _interpolate_color_at_pos(pos: Vector2, color_cels: Array) -> Color:
+	# TODO: Can probably speed this up using a bin search of some sort
+	for i in range(color_cels.size()):
+		for j in range(color_cels[i].size()):
+			if color_cels[i][j].is_point_inside_cell(pos):
+				# Get the nearest neighbor color
+				var cel = color_cels[i][j]
+				var min_distance := pos.distance_to(cel.top_left_pos)
+				var min_color = cel.top_left_color
+				if pos.distance_to(cel.top_right_pos) < min_distance:
+					min_distance = pos.distance_to(cel.top_right_pos)
+					min_color = cel.top_right_color
+				if pos.distance_to(cel.bottom_left_pos) < min_distance:
+					min_distance = pos.distance_to(cel.bottom_left_pos)
+					min_color = cel.bottom_left_color
+				if pos.distance_to(cel.bottom_right_pos) < min_distance:
+					min_distance = pos.distance_to(cel.bottom_right_pos)
+					min_color = cel.bottom_right_color
+				return min_color
+	return Color(0, 0, 0, 0)
+
+# Interpolate the transparent pixels in the image within the dimensions of the mask rect
+func _interpolate_image(img: Image, mask: Rect2) -> void:
+	var color_cels := _get_color_cel_list()
+	img.lock()
+	var initial_pos := mask.position
+	var threads := []
+	
+	for x in range(mask.size.x):
+		var args := [img, mask, color_cels, initial_pos, x]
+		var t := Thread.new()
+		t.start(self, "_interpolate_image_thread", args)
+		threads.push_back(t)
+
+	for t in threads:
+		t.wait_to_finish()
+		
+	img.unlock()
+
+func _interpolate_image_thread(args: Array) -> void:
+	var img = args[0]
+	var mask = args[1]
+	var color_cels = args[2]
+	var initial_pos = args[3]
+	var x = args[4]
+
+	for y in range(mask.size.y):
+		var pos = initial_pos + Vector2(x, y)
+		if img.get_pixelv(pos) == Color(0, 0, 0, 0):
+			img.set_pixelv(pos, _interpolate_color_at_pos(pos, color_cels))
+
 # Saves the transformed image
 func confirm() -> Image:
 	var crop_rect := Rect2(_get_bounding_box_pixel_pos(), Vector2(cage_width, cage_height))
+	_interpolate_image(transform_preview_image, crop_rect)
 	var final_image := Image.new()
 	final_image.create(cage_width, cage_height, false, Image.FORMAT_RGBA8)
 	final_image.blit_rect(transform_preview_image, crop_rect, Vector2.ZERO)
