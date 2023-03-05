@@ -61,6 +61,7 @@ func _input(event: InputEvent) -> void:
 			selection_node.transform_content_confirm()
 			_resize_selection(selection_node)
 			selection_node.show()
+			canvas.remove_child(cage_transform)
 			cage_transform.queue_free()
 			cage_transform = null
 
@@ -73,10 +74,22 @@ func _process(_delta) -> void:
 
 func queue_free() -> void:
 	if selection_node:
+		selection_node.transform_content_confirm()
 		selection_node.show()
+	if cage_transform:
+		cage_transform.queue_free()
+		cage_transform = null
 	.queue_free()
 
-# This logic is not present in the v0.10.3 release of Pixelorama
+func _exit_tree() -> void:
+	if selection_node:
+		selection_node.transform_content_confirm()
+		selection_node.show()
+	if cage_transform:
+		cage_transform.queue_free()
+		cage_transform = null
+
+# This logic is not present in some versions of Pixelorama
 # Providing an implementation here for compatability
 func _resize_selection(selection: Node2D) -> void:
 	var size = selection.big_bounding_rectangle.size.abs()

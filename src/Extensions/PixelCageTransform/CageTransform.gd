@@ -46,6 +46,7 @@ class ColorCel:
 		return crossing_count % 2 != 0
 
 func _ready():
+	add_to_group("cage_transform")
 	connect_edge_signals(top_edge)
 	connect_edge_signals(bottom_edge)
 	connect_edge_signals(left_edge)
