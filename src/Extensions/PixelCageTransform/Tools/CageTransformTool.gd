@@ -58,8 +58,9 @@ func _input(event: InputEvent) -> void:
 			selection_node.preview_image = cage_transform.confirm()
 			var new_rect := Rect2(cage_transform.get_bounding_box_position(), selection_node.preview_image.get_size())
 			selection_node.big_bounding_rectangle = new_rect
+			selection_node.is_pasting = true
 			selection_node.transform_content_confirm()
-			_resize_selection(selection_node)
+			selection_node.resize_selection()
 			selection_node.show()
 			canvas.remove_child(cage_transform)
 			cage_transform.queue_free()
@@ -88,17 +89,3 @@ func _exit_tree() -> void:
 	if cage_transform:
 		cage_transform.queue_free()
 		cage_transform = null
-
-# This logic is not present in some versions of Pixelorama
-# Providing an implementation here for compatability
-func _resize_selection(selection: Node2D) -> void:
-	var size = selection.big_bounding_rectangle.size.abs()
-	var selection_map = global.current_project.selection_map
-	var selection_map_copy = SelectionMap.new()
-	selection_map_copy.copy_from(selection_map)
-	selection_map_copy.resize_bitmap_values(
-		global.current_project, size, selection.temp_rect.size.x < 0, selection.temp_rect.size.y < 0
-	)
-	global.current_project.selection_map = selection_map_copy
-	global.current_project.selection_map_changed()
-	selection.update()
