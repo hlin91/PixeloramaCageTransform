@@ -8,6 +8,7 @@ var global: Node
 
 var cage_transform_scene: PackedScene = preload("res://src/Extensions/PixelCageTransform/CageTransform.tscn")
 var selection_node: Node2D
+var interpolate_result: bool = true
 
 func _enter_tree() -> void:
 	extensions_api = get_node("/root/ExtensionsApi")
@@ -55,7 +56,7 @@ func draw_end(_draw_pos: Vector2) -> void:
 func _input(event: InputEvent) -> void:
 	if cage_transform:
 		if Input.is_action_just_pressed("ui_accept"):
-			selection_node.preview_image = cage_transform.confirm()
+			selection_node.preview_image = cage_transform.confirm(interpolate_result)
 			var new_rect := Rect2(cage_transform.get_bounding_box_position(), selection_node.preview_image.get_size())
 			selection_node.big_bounding_rectangle = new_rect
 			selection_node.is_pasting = true
@@ -89,3 +90,21 @@ func _exit_tree() -> void:
 	if cage_transform:
 		cage_transform.queue_free()
 		cage_transform = null
+
+func get_config() -> Dictionary:
+	var config := .get_config()
+	config["interpolate_result"] = interpolate_result
+	return config
+
+func set_config(config: Dictionary) -> void:
+	.set_config(config)
+	interpolate_result = config.get("interpolate_result", interpolate_result)
+
+func update_config() -> void:
+	.update_config()
+	$InterpolateResult.pressed = interpolate_result
+
+func _on_InterpolateResult_toggled(button_pressed:bool):
+	interpolate_result = button_pressed
+	update_config()
+	save_config()

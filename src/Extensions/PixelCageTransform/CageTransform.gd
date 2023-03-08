@@ -331,9 +331,10 @@ func _interpolate_image_thread(args: Array) -> void:
 			img.set_pixelv(pos, _interpolate_color_at_pos(pos, color_cels))
 
 # Saves the transformed image
-func confirm() -> Image:
+func confirm(interpolate_result: bool) -> Image:
 	var crop_rect := Rect2(_get_bounding_box_pixel_pos(), Vector2(cage_width, cage_height))
-	_interpolate_image(transform_preview_image, crop_rect)
+	if interpolate_result:
+		_interpolate_image(transform_preview_image, crop_rect)
 	var final_image := Image.new()
 	final_image.create(cage_width, cage_height, false, Image.FORMAT_RGBA8)
 	final_image.blit_rect(transform_preview_image, crop_rect, Vector2.ZERO)
